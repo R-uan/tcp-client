@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-set(PROJECT_NAME galac-conq)
+set(PROJECT_NAME tcp-client)
                 
 project(${PROJECT_NAME} CXX)
 
