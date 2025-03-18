@@ -55,3 +55,7 @@ void ClientSocket::listen() {
         std::cout << "Received: " << std::string(buffer, bytes_received) << std::endl;
     }
 }
+
+void ClientSocket::handle_incoming_packet(std::vector<uint8_t> packet) {
+    
+}
