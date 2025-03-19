@@ -1,4 +1,6 @@
+#include <cstdint>
 #include <cstring>
+#include <exception>
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
@@ -6,6 +8,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include "client.hpp"
+#include "protocol.hpp"
 
 ClientSocket::ClientSocket(const char *ip, int port) {
         socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -52,10 +55,22 @@ void ClientSocket::listen() {
             break;
         }
 
-        std::cout << "Received: " << std::string(buffer, bytes_received) << std::endl;
+        handle_incoming_packet(std::vector<uint8_t>(buffer, buffer + bytes_received));
     }
 }
 
 void ClientSocket::handle_incoming_packet(std::vector<uint8_t> packet) {
-    
+    try {
+        Protocol protocol(packet);
+        switch (protocol.header.operation) {
+            case ProtocolType::Connect:
+                break;
+            case ProtocolType::GameState:
+                std::string update(protocol.payload.begin(), protocol.payload.end());
+                std:: cout << "[Info] # Received game state update" << std::endl;
+                break;
+        }
+    } catch (std::exception e) {
+
+    }
 }

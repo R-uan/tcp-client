@@ -23,7 +23,7 @@ int main() {
         0x52, 0x75, 0x61, 0x6E, 0x1A,
     };
 
-    std::vector<uint8_t> packet = Protocol::create_packet(ProtocolOperations::Connect, body);
+    std::vector<uint8_t> packet = Protocol::create_packet(ProtocolType::Connect, body);
     client.send_packet(packet);
 
     receiver.get();
