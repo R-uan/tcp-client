@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
 set(PROJECT_NAME tcp-client)
-                
+
 project(${PROJECT_NAME} CXX)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")

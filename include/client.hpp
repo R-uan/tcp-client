@@ -12,7 +12,7 @@ struct ClientSocket {
 
     void listen();
     void send_packet(std::vector<uint8_t> packet);
-    void handle_incoming_packet(std::vector<uint8_t> packet);
+    void handle_incoming_packet(std::vector<uint8_t> &bytes);
 };
 
 #endif
