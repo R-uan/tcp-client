@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <cstring>
 #include <exception>
+#include <string>
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
@@ -8,6 +9,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include "client.hpp"
+#include "logger.hpp"
 #include "packet.hpp"
 
 ClientSocket::ClientSocket(const char *ip, int port)
@@ -77,8 +79,18 @@ void ClientSocket::handle_incoming_packet(std::vector<uint8_t> &bytes)
         Packet packet = Packet::parse(bytes);
         switch (packet.header.header_type)
         {
-        case MessageType::HANDSHAKE:
+        case MessageType::CONNECT:
+        {
+            std::string info("connected");
+            Logger::info(info);
             break;
+        }
+        case MessageType::GAMESTATE:
+        {
+            std::string info("game state");
+            Logger::info(info);
+            break;
+        }
         }
     }
     catch (std::exception e)

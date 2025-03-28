@@ -8,8 +8,15 @@
 enum class MessageType : uint8_t
 {
     DISCONNECT = 0x00,
-    HANDSHAKE = 0x01,
-    ERROR = 0xFF
+    CONNECT = 0x01,
+
+    GAMESTATE = 0x10,
+
+    ALREADYCONNECTED = 0xFB,
+    INVALIDPLAYERDATA = 0xFC,
+    INVALIDCHECKSUM = 0xFD,
+    INVALIDHEADER = 0xFE,
+    ERROR = 0xFF,
 };
 
 struct ProtocolHeader
