@@ -1,10 +1,12 @@
-#include "packet.hpp"
+#include <vector>
 #include <cstdint>
 #include <iostream>
 #include <optional>
-#include "bytes.hpp"
 #include <system_error>
-#include <vector>
+#include <nlohmann/json.hpp>
+
+#include "bytes.hpp"
+#include "packet.hpp"
 
 /**
  * @brief Compares the given checksum with a newly calculated from the payload

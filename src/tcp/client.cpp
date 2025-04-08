@@ -55,7 +55,7 @@ void ClientSocket::listen()
     {
         memset(buffer, 0, sizeof(buffer));
 
-        int bytes_received = recv(socket_fd, buffer, sizeof(buffer), 0);
+        int bytes_received = recv(this->socket_fd, buffer, sizeof(buffer), 0);
         if (bytes_received == 0)
         {
             std::cout << "Connection closed by peer.\n";
