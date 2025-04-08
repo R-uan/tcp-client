@@ -1,10 +1,11 @@
-#include "TcpConnection.hpp"
-#include <arpa/inet.h>
+#include <thread>
 #include <cstring>
+#include <unistd.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <thread>
-#include <unistd.h>
+
+#include "tcp/tcpconnection.hpp"
 
 TcpConnection::TcpConnection(std::string server_addr, int port)
     : server_addr(server_addr), port(port) {}

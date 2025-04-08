@@ -1,7 +1,8 @@
-#include "logger.hpp"
 #include <ctime>
 #include <iostream>
 #include <sstream>
+
+#include "utils/logger.hpp"
 
 void Logger::info(std::string &message)
 {

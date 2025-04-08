@@ -3,6 +3,7 @@
 ### C++ ###
 # Prerequisites
 /build
+/build.sh
 .cache
 *.d
 

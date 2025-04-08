@@ -5,23 +5,15 @@
 #include <system_error>
 #include <nlohmann/json.hpp>
 
-#include "bytes.hpp"
-#include "packet.hpp"
+#include "utils/bytes.hpp"
+#include "tcp/packet.hpp"
 
-/**
- * @brief Compares the given checksum with a newly calculated from the payload
- * @returns bool indicating if they match or not
- */
 bool ProtocolHeader::check_the_sum(uint16_t &checksum, std::vector<uint8_t> &payload)
 {
     uint16_t summy = xor_checksum(payload);
     return summy == checksum;
 }
 
-/**
- * @brief Generates a xor checksum from the data given
- * @returns The checksum as a uint16_t
- */
 uint16_t ProtocolHeader::xor_checksum(const std::vector<uint8_t> &data)
 {
     uint16_t checksum = 0;
@@ -33,11 +25,6 @@ uint16_t ProtocolHeader::xor_checksum(const std::vector<uint8_t> &data)
     return checksum;
 }
 
-/**
- * @brief Parses the given uint8_t into a MessageType enum
- * @if Sucessful match @return Optional<MessageType>
- * @else No match @return nullopt
- */
 std::optional<MessageType> tryFrom(uint8_t value)
 {
 
@@ -66,24 +53,20 @@ std::optional<MessageType> tryFrom(uint8_t value)
     }
 }
 
-/**
- * @brief Wrap the ProtocolHeader properties into a byte vector
- */
 std::vector<uint8_t> ProtocolHeader::wrap_header() const
 {
     std::vector<uint8_t> header_data;
+
     header_data.push_back(static_cast<uint8_t>(header_type));
-    header_data.push_back(static_cast<uint8_t>(checksum & 0xFF));
-    header_data.push_back(static_cast<uint8_t>((checksum >> 8) & 0xFF));
-    header_data.push_back(static_cast<uint8_t>(payload_length & 0xFF));
     header_data.push_back(static_cast<uint8_t>((payload_length >> 8) & 0xFF));
+    header_data.push_back(static_cast<uint8_t>(payload_length & 0xFF));
+    header_data.push_back(static_cast<uint8_t>((checksum >> 8) & 0xFF));
+    header_data.push_back(static_cast<uint8_t>(checksum & 0xFF));
+    header_data.push_back(0x0A);
 
     return header_data;
 }
 
-/**
- * @brief Turn an vector of uint8_t into a ProtocolHeader
- */
 std::optional<ProtocolHeader> ProtocolHeader::from_bytes(std::vector<uint8_t> &header_bytes)
 {
     if (header_bytes.size() < 5)
@@ -105,9 +88,6 @@ std::optional<ProtocolHeader> ProtocolHeader::from_bytes(std::vector<uint8_t> &h
         static_cast<int>(message_length)};
 }
 
-/**
- *  @brief Creates a ProtocolHeader for a new packet
- */
 ProtocolHeader ProtocolHeader::create(MessageType header_type, std::vector<uint8_t> payload)
 {
     uint16_t payload_size = payload.size();
@@ -119,9 +99,6 @@ ProtocolHeader ProtocolHeader::create(MessageType header_type, std::vector<uint8
         static_cast<int>(payload_size)};
 }
 
-/**
- * @brief Wrap the Packet properties into a byte vector
- */
 std::vector<uint8_t> Packet::wrap_packet() const
 {
     std::vector<uint8_t> wrapped_header = header.wrap_header();
@@ -134,9 +111,6 @@ std::vector<uint8_t> Packet::wrap_packet() const
     return packet;
 }
 
-/**
- * @brief Parses the whole protocol message into a Packet struct. The header is parsed into a ProtocolHeader
- */
 Packet Packet::parse(std::vector<uint8_t> &protocol)
 {
     std::vector<uint8_t> header_bytes(protocol.begin(), protocol.begin() + 5);
@@ -152,9 +126,6 @@ Packet Packet::parse(std::vector<uint8_t> &protocol)
     return Packet{header.value(), protocol};
 }
 
-/**
- * @brief Creates a new packet from scratch (contains the ProtocolHeader)
- */
 Packet Packet::create(MessageType header_type, std::vector<uint8_t> &payload)
 {
     auto header = ProtocolHeader::create(header_type, payload);

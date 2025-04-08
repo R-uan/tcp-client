@@ -1,10 +1,11 @@
-#include "player.hpp"
-#include "TcpConnection.hpp"
-#include "GameClientAPI.h"
 #include <memory>
-#include <nlohmann/json.hpp>
-#include "packet.hpp"
 #include <mutex>
+#include <nlohmann/json.hpp>
+
+#include "tcp/packet.hpp"
+#include "game/player.hpp"
+#include "GameClientAPI.h"
+#include "tcp/tcpconnection.hpp"
 
 static std::unique_ptr<TcpConnection> g_connection;
 static std::mutex g_connection_mutex;
@@ -22,7 +23,7 @@ extern "C"
 
     API_EXPORT void connect_player()
     {
-        Player player("testing id", "username", 50, "");
+        Player player("testing id", "username", 50, "deckid");
         auto json_obj = nlohmann::json(player);
         auto cbor_data = nlohmann::json::to_cbor(json_obj);
 
