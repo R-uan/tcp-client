@@ -4,9 +4,9 @@
 struct Player
 {
     std::string id;
-    std::string username;
-    int level;
+    std::string token;
     std::string current_deck_id;
+    std::string player_color;
 
-    Player(std::string id, std::string username, int level, std::string current_deck_id);
+    Player(std::string id, std::string token, std::string current_deck_id, std::string color);
 };
