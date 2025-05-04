@@ -32,4 +32,24 @@ extern "C"
         std::lock_guard<std::mutex> lock(g_connection_mutex);
         g_connection->send_packet(packet);
     }
+
+    API_EXPORT uint8_t *get_next_gamestate(int *outSize)
+    {
+        std::cout << "GameState packets: " << g_connection->gameStateQueue.size() << std::endl;
+        std::lock_guard<std::mutex> lock(g_connection_mutex);
+        if (g_connection->gameStateQueue.size() <= 0)
+            return nullptr;
+        Packet packet = g_connection->gameStateQueue.front();
+        std::vector<uint8_t> payload = packet.payload;
+        std::cout << "1" << std::endl;
+        *outSize = payload.size();
+        std::cout << "2" << std::endl;
+        uint8_t *result = new uint8_t[*outSize];
+        std::cout << "3" << std::endl;
+        std::copy(payload.begin(), payload.end(), result);
+        std::cout << "4" << std::endl;
+        g_connection->gameStateQueue.pop();
+        std::cout << "5" << std::endl;
+        return result;
+    }
 }

@@ -1,3 +1,4 @@
+#include <queue>
 #include <thread>
 #include <cstring>
 #include <unistd.h>
@@ -5,10 +6,22 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include "tcp/packet.hpp"
+#include "GameClientAPI.h"
 #include "tcp/tcpconnection.hpp"
 
 TcpConnection::TcpConnection(std::string server_addr, int port)
     : server_addr(server_addr), port(port) {}
+
+TcpConnection::~TcpConnection()
+{
+    std::cout << "Closing connection by destructor." << std::endl;
+    close(socket_fd);
+    if (this->listen_thread.joinable())
+    {
+        this->listen_thread.join();
+    }
+}
 
 void TcpConnection::connect()
 {
@@ -66,6 +79,11 @@ void TcpConnection::start_listening()
     this->listen_thread = std::thread(&TcpConnection::listen_loop, this);
 }
 
+void TcpConnection::queue_packet(Packet packet)
+{
+    packetQueue.push(packet);
+}
+
 void TcpConnection::send_packet(std::vector<uint8_t> packet)
 {
     send(this->socket_fd, packet.data(), packet.size(), 0);
@@ -73,15 +91,23 @@ void TcpConnection::send_packet(std::vector<uint8_t> packet)
 
 void TcpConnection::handle_incoming_packet(std::vector<uint8_t> &bytes)
 {
-    std::cout << "Pretend I handled the packet" << std::endl;
-}
+    std::cout << "Received packet: " << bytes.size() << std::endl;
 
-TcpConnection::~TcpConnection()
-{
-    std::cout << "Closing connection by destructor." << std::endl;
-    close(socket_fd);
-    if (this->listen_thread.joinable())
+    Packet packet = Packet::parse(bytes);
+    MessageType type = packet.header.header_type;
+
+    switch (type)
     {
-        this->listen_thread.join();
+    case MessageType::GAMESTATE:
+        std::cout << "Game State" << std::endl;
+        gameStateQueue.push(packet);
+        break;
+
+    case MessageType::ERROR:
+        errorQueue.push(packet);
+        break;
+
+    default:
+        break;
     }
 }

@@ -2,17 +2,23 @@
 #include <cstdint>
 #include <thread>
 #include <vector>
+#include <queue>
 #include <iostream>
 
 #pragma
 class TcpConnection
 {
 public:
+    std::queue<Packet> errorQueue;
+    std::queue<Packet> packetQueue;
+    std::queue<Packet> gameStateQueue;
+
     TcpConnection(std::string server_addr, int port);
     ~TcpConnection();
 
     void connect();
     void start_listening();
+    void queue_packet(Packet packet);
     void send_packet(std::vector<uint8_t> packet);
     void handle_incoming_packet(std::vector<uint8_t> &bytes);
 
