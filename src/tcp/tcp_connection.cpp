@@ -1,5 +1,6 @@
 #include <queue>
 #include <thread>
+#include <sstream>
 #include <cstring>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -7,8 +8,9 @@
 #include <sys/socket.h>
 
 #include "tcp/packet.hpp"
-#include "GameClientAPI.h"
-#include "tcp/tcpconnection.hpp"
+#include "utils/logger.hpp"
+#include "game_client_api.h"
+#include "tcp/tcp_connection.hpp"
 
 TcpConnection::TcpConnection(std::string server_addr, int port)
     : server_addr(server_addr), port(port) {}
@@ -25,11 +27,14 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::connect()
 {
+    std::stringstream ss;
     this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (this->socket_fd == -1)
     {
-        std::cerr << "Socket creation failed\n";
+        ss << "Socket creation failed" << std::endl;
+        std::string message = ss.str();
+        Logger::error(message);
         exit(EXIT_FAILURE);
     }
 
@@ -40,12 +45,17 @@ void TcpConnection::connect()
 
     if (::connect(this->socket_fd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1)
     {
-        std::cerr << "Connection failed\n";
+        ss << "Connection failed" << std::endl;
+        std::string message = ss.str();
+        Logger::error(message);
+
         close(this->socket_fd);
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Connected to server!\n";
+    ss << "Connected to server: " << this->server_addr << ":" << this->port << std::endl;
+    std::string message = ss.str();
+    Logger::info(message);
 }
 
 void TcpConnection::listen_loop()
@@ -58,12 +68,18 @@ void TcpConnection::listen_loop()
         int bytes_received = recv(this->socket_fd, buffer, sizeof(buffer), 0);
         if (bytes_received == 0)
         {
-            std::cout << "Connection closed by peer.\n";
+            std::stringstream ss;
+            ss << "Connection closed by the server." << std::endl;
+            std::string message = ss.str();
+            Logger::info(message);
             break;
         }
         else if (bytes_received < 0)
         {
-            std::cerr << "Error receiving data.\n";
+            std::stringstream ss;
+            ss << "Error receiving data from the server." << std::endl;
+            std::string message = ss.str();
+            Logger::info(message);
             break;
         }
 
@@ -86,12 +102,16 @@ void TcpConnection::queue_packet(Packet packet)
 
 void TcpConnection::send_packet(std::vector<uint8_t> packet)
 {
-    send(this->socket_fd, packet.data(), packet.size(), 0);
+    ssize_t sent = send(this->socket_fd, packet.data(), packet.size(), 0);
+    std::stringstream ss;
+    ss << "Sent " << sent << " bytes." << std::endl;
+    std::string message = ss.str();
+    Logger::info(message);
 }
 
 void TcpConnection::handle_incoming_packet(std::vector<uint8_t> &bytes)
 {
-    std::cout << "Received packet: " << bytes.size() << std::endl;
+    std::stringstream ss;
 
     Packet packet = Packet::parse(bytes);
     MessageType type = packet.header.header_type;
@@ -99,15 +119,20 @@ void TcpConnection::handle_incoming_packet(std::vector<uint8_t> &bytes)
     switch (type)
     {
     case MessageType::GAMESTATE:
-        std::cout << "Game State" << std::endl;
+        ss << "Received game state of " << bytes.size() << " bytes." << std::endl;
         gameStateQueue.push(packet);
         break;
 
     case MessageType::ERROR:
+        ss << "Received error of " << bytes.size() << " bytes." << std::endl;
         errorQueue.push(packet);
         break;
 
     default:
+        ss << "Received unkwown of " << bytes.size() << " bytes." << std::endl;
         break;
     }
+
+    std::string message = ss.str();
+    Logger::info(message);
 }

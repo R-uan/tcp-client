@@ -25,9 +25,8 @@ uint16_t ProtocolHeader::xor_checksum(const std::vector<uint8_t> &data)
     return checksum;
 }
 
-std::optional<MessageType> tryFrom(uint8_t value)
+std::optional<MessageType> ProtocolHeader::tryFrom(uint8_t value)
 {
-
     switch (value)
     {
     case 0x00:
@@ -71,7 +70,8 @@ std::optional<ProtocolHeader> ProtocolHeader::from_bytes(std::vector<uint8_t> &h
 {
     if (header_bytes.size() < 5)
         return std::nullopt;
-    std::optional<MessageType> header_type = tryFrom(header_bytes[0]);
+
+    std::optional<MessageType> header_type = ProtocolHeader::tryFrom(header_bytes[0]);
 
     if (!header_type.has_value())
     {
@@ -115,6 +115,7 @@ Packet Packet::parse(std::vector<uint8_t> &protocol)
 {
     std::vector<uint8_t> header_bytes(protocol.begin(), protocol.begin() + 5);
     std::optional<ProtocolHeader> header = ProtocolHeader::from_bytes(header_bytes);
+
     if (header == std::nullopt)
     {
         std::cout << "Invalid Header" << std::endl;

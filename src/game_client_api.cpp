@@ -4,8 +4,9 @@
 
 #include "tcp/packet.hpp"
 #include "game/player.hpp"
-#include "GameClientAPI.h"
-#include "tcp/tcpconnection.hpp"
+#include "utils/logger.hpp"
+#include "game_client_api.h"
+#include "tcp/tcp_connection.hpp"
 
 static std::unique_ptr<TcpConnection> g_connection;
 static std::mutex g_connection_mutex;
@@ -33,23 +34,67 @@ extern "C"
         g_connection->send_packet(packet);
     }
 
-    API_EXPORT uint8_t *get_next_gamestate(int *outSize)
+    API_EXPORT void free_ptr(uint8_t *ptr)
     {
-        std::cout << "GameState packets: " << g_connection->gameStateQueue.size() << std::endl;
+        delete[] ptr;
+    }
+
+    API_EXPORT uint8_t *send_packet(uint8_t messageType, const char *payload, int length)
+    {
         std::lock_guard<std::mutex> lock(g_connection_mutex);
+
+        std::vector<uint8_t> payload_vec(payload, payload + length);
+        auto type = ProtocolHeader::tryFrom(messageType);
+        if (type == std::nullopt)
+            return nullptr;
+
+        Packet packet = Packet::create(type.value(), payload_vec);
+        g_connection->send_packet(packet.wrap_packet());
+
+        return 0x00;
+    }
+
+    API_EXPORT uint8_t *retrieve_gamestate(int *outSize)
+    {
+        std::stringstream ss;
+        ss << "Game State Packets: " << g_connection->gameStateQueue.size();
+        std::string message = ss.str();
+        Logger::info(message);
+
+        std::lock_guard<std::mutex> lock(g_connection_mutex);
+
         if (g_connection->gameStateQueue.size() <= 0)
             return nullptr;
+
         Packet packet = g_connection->gameStateQueue.front();
         std::vector<uint8_t> payload = packet.payload;
-        std::cout << "1" << std::endl;
+
         *outSize = payload.size();
-        std::cout << "2" << std::endl;
         uint8_t *result = new uint8_t[*outSize];
-        std::cout << "3" << std::endl;
         std::copy(payload.begin(), payload.end(), result);
-        std::cout << "4" << std::endl;
+
         g_connection->gameStateQueue.pop();
-        std::cout << "5" << std::endl;
+        return result;
+    }
+
+    API_EXPORT uint8_t *retrieve_error(int *outSize)
+    {
+        std::stringstream ss;
+        ss << "Error Packets: " << g_connection->errorQueue.size();
+        std::string message = ss.str();
+        Logger::info(message);
+
+        if (g_connection->errorQueue.size() <= 0)
+            return nullptr;
+
+        Packet packet = g_connection->errorQueue.front();
+        std::vector<uint8_t> payload = packet.payload;
+
+        *outSize = payload.size();
+        uint8_t *result = new uint8_t[*outSize];
+        std::copy(payload.begin(), payload.end(), result);
+
+        g_connection->errorQueue.pop();
         return result;
     }
 }

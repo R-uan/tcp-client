@@ -25,6 +25,7 @@ struct ProtocolHeader
     int checksum;
     int payload_length;
 
+    static std::optional<MessageType> tryFrom(uint8_t value);
     static uint16_t xor_checksum(const std::vector<uint8_t> &data);
     static bool check_the_sum(uint16_t &checksum, std::vector<uint8_t> &payload);
 
