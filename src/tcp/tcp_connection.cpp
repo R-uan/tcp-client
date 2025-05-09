@@ -100,13 +100,14 @@ void TcpConnection::queue_packet(Packet packet)
     packetQueue.push(packet);
 }
 
-void TcpConnection::send_packet(std::vector<uint8_t> packet)
+ssize_t TcpConnection::send_packet(const std::vector<uint8_t>& packet) const
 {
-    ssize_t sent = send(this->socket_fd, packet.data(), packet.size(), 0);
+    const ssize_t sent = send(this->socket_fd, packet.data(), packet.size(), 0);
     std::stringstream ss;
     ss << "Sent " << sent << " bytes." << std::endl;
     std::string message = ss.str();
     Logger::info(message);
+    return sent;
 }
 
 void TcpConnection::handle_incoming_packet(std::vector<uint8_t> &bytes)

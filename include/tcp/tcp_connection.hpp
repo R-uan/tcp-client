@@ -19,7 +19,7 @@ public:
     void connect();
     void start_listening();
     void queue_packet(Packet packet);
-    void send_packet(std::vector<uint8_t> packet);
+    ssize_t send_packet(const std::vector<uint8_t>& packet) const;
     void handle_incoming_packet(std::vector<uint8_t> &bytes);
 
 private:

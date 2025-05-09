@@ -12,12 +12,15 @@ extern "C"
 {
 #endif
 
-    API_EXPORT void free_ptr(uint8_t *ptr);
+    API_EXPORT void start_connection(const char *addr, int port, const char *match_id);
+    API_EXPORT ssize_t connect_player(const char *playerId, const char *playerDeckId, const char *token);
+
+    API_EXPORT void free_ptr(const uint8_t *ptr);
+
     API_EXPORT uint8_t *retrieve_error(int *outSize);
     API_EXPORT uint8_t *retrieve_gamestate(int *outSize);
-    API_EXPORT void start_connection(const char *addr, int port, const char *match_id);
-    API_EXPORT uint8_t *send_packet(uint8_t messageType, const char *payload, int length);
-    API_EXPORT void connect_player(const char *playerId, const char *playerDeckId, const char *token);
+
+    API_EXPORT ssize_t play_card(const char *payload, int length);
 
 #ifdef __cplusplus
 }

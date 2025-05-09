@@ -12,6 +12,9 @@ enum class MessageType : uint8_t
 
     GAMESTATE = 0x10,
 
+    PLAYCARD = 0x11,
+    ATTACKPLAYER = 0x12,
+
     ALREADYCONNECTED = 0xFB,
     INVALIDPLAYERDATA = 0xFC,
     INVALIDCHECKSUM = 0xFD,
@@ -29,7 +32,7 @@ struct ProtocolHeader
     static uint16_t xor_checksum(const std::vector<uint8_t> &data);
     static bool check_the_sum(uint16_t &checksum, std::vector<uint8_t> &payload);
 
-    std::vector<uint8_t> wrap_header() const;
+    [[nodiscard]] std::vector<uint8_t> wrap_header() const;
     static std::optional<ProtocolHeader> from_bytes(std::vector<uint8_t> &protocol);
     static ProtocolHeader create(MessageType header_type, std::vector<uint8_t> payload);
 };
@@ -39,7 +42,7 @@ struct Packet
     ProtocolHeader header;
     std::vector<uint8_t> payload;
 
-    std::vector<uint8_t> wrap_packet() const;
+    [[nodiscard]] std::vector<uint8_t> wrap_packet() const;
     static Packet parse(std::vector<uint8_t> &protocol);
     static Packet create(MessageType header_type, std::vector<uint8_t> &payload);
 };

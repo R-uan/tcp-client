@@ -38,5 +38,8 @@
 *.exe
 *.out
 *.app
+.vscode/
+.idea/
+.clang*
 
 # End of https://www.toptal.com/developers/gitignore/api/c++
