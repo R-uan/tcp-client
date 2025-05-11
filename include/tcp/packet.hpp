@@ -28,13 +28,12 @@ struct ProtocolHeader
     int checksum;
     int payload_length;
 
+    [[nodiscard]] std::vector<uint8_t> wrap_header() const;
     static std::optional<MessageType> tryFrom(uint8_t value);
     static uint16_t xor_checksum(const std::vector<uint8_t> &data);
-    static bool check_the_sum(uint16_t &checksum, std::vector<uint8_t> &payload);
-
-    [[nodiscard]] std::vector<uint8_t> wrap_header() const;
     static std::optional<ProtocolHeader> from_bytes(std::vector<uint8_t> &protocol);
     static ProtocolHeader create(MessageType header_type, std::vector<uint8_t> payload);
+    static bool check_the_sum(const uint16_t &checksum, const std::vector<uint8_t> &payload);
 };
 
 struct Packet

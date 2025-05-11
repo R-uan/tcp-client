@@ -15,10 +15,13 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Player, id, token, current_deck_id, player_co
 
 extern "C" {
 
-API_EXPORT void start_connection(const char *addr, int port, const char *match_id) {
+API_EXPORT bool start_connection(const char *addr, int port, const char *match_id) {
     g_connection = std::make_unique<TcpConnection>(std::string(addr), port);
     g_connection->connect();
-    g_connection->start_listening();
+    if (g_connection->start_listening() == NetworkReturnStatus::SUCCESS)
+        return true;
+
+    return false;
 }
 
 API_EXPORT ssize_t connect_player(const char *playerId, const char *playerDeckId, const char *token) {
@@ -82,5 +85,4 @@ API_EXPORT ssize_t play_card(const uint8_t *payload, const int length) {
     std::lock_guard<std::mutex> lock(g_connection_mutex);
     return g_connection->send_packet(packet.wrap_packet());
 }
-
 }

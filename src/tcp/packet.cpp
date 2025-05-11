@@ -8,16 +8,16 @@
 #include "utils/bytes.hpp"
 #include "tcp/packet.hpp"
 
-bool ProtocolHeader::check_the_sum(uint16_t &checksum, std::vector<uint8_t> &payload)
+bool ProtocolHeader::check_the_sum(const uint16_t &checksum, const std::vector<uint8_t> &payload)
 {
-    uint16_t summy = xor_checksum(payload);
+    const uint16_t summy = xor_checksum(payload);
     return summy == checksum;
 }
 
 uint16_t ProtocolHeader::xor_checksum(const std::vector<uint8_t> &data)
 {
     uint16_t checksum = 0;
-    for (uint8_t byte : data)
+    for (const uint8_t byte : data)
     {
         checksum ^= byte;
     }
@@ -79,8 +79,8 @@ std::optional<ProtocolHeader> ProtocolHeader::from_bytes(std::vector<uint8_t> &h
         throw std::errc::protocol_error;
     }
 
-    uint16_t checksum = u8::to_u16(header_bytes[3], header_bytes[4]);
-    uint16_t message_length = u8::to_u16(header_bytes[1], header_bytes[2]);
+    const uint16_t checksum = u8::to_u16(header_bytes[3], header_bytes[4]);
+    const uint16_t message_length = u8::to_u16(header_bytes[1], header_bytes[2]);
 
     return ProtocolHeader{
         header_type.value(),

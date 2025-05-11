@@ -6,6 +6,15 @@
 #include <iostream>
 
 #pragma
+
+
+enum NetworkReturnStatus {
+    SUCCESS = 0,
+    SOCKET_FAILURE = 1,
+    CONNECTION_CLOSED = 2,
+    INVALID_PACKET = 3,
+};
+
 class TcpConnection
 {
 public:
@@ -16,11 +25,11 @@ public:
     TcpConnection(std::string server_addr, int port);
     ~TcpConnection();
 
-    void connect();
-    void start_listening();
-    void queue_packet(Packet packet);
-    ssize_t send_packet(const std::vector<uint8_t>& packet) const;
+    int connect();
+    int start_listening();
+    void queue_packet(const Packet &packet);
     void handle_incoming_packet(std::vector<uint8_t> &bytes);
+    [[nodiscard]] ssize_t send_packet(const std::vector<uint8_t>& packet) const;
 
 private:
     void listen_loop();
