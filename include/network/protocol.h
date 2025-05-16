@@ -6,6 +6,7 @@
 #define PROTOCOL_H
 #include <cstdint>
 #include <optional>
+#include <queue>
 #include <vector>
 
 enum class MessageType : uint8_t
@@ -26,8 +27,9 @@ enum class MessageType : uint8_t
 };
 
 struct Protocol {
+    static void handle_invalid();
     static void handle_packet(std::vector<uint8_t> bytes);
-    static void handle_game_state()
+    static void handle_game_state(std::vector<uint8_t> &payload);
 };
 
 struct Header {
@@ -36,7 +38,16 @@ struct Header {
     uint16_t checksum;
 
     std::vector<uint8_t> serialize_header() const;
-    static std::optional<Header> parse_header(const std::vector<uint8_t> &bytes);
     static std::optional<MessageType> try_from(const uint8_t &value);
+    static std::optional<Header> parse_header(const std::vector<uint8_t> &bytes);
+    static Header Header::create_header(const MessageType type, const std::vector<uint8_t> &payload);
+};
+
+struct Packet {
+    Header header;
+    std::vector<uint8_t> payload;
+
+    static std::optional<Packet> parse_packet(const std::vector<uint8_t> &bytes);
+    static Packet create_packet(const MessageType &type, const std::vector<uint8_t> &payload);
 };
 #endif //PROTOCOL_H

@@ -9,6 +9,7 @@
 #include <system_error>
 #include <unistd.h>
 #include <vector>
+#include <poll.h>
 
 #include "network/protocol.h"
 #include "utils/logger.hpp"
@@ -70,28 +71,59 @@ int TcpSocket::listen() {
     return 1;
 }
 
+int TcpSocket::send_packet(const Packet &packet) const {
+    std::lock_guard lock(this->fd_mutex);
+    const ssize_t sent = send(this->socket_fd, &packet.payload(), packet.payload.size(), 0);
+    std::stringstream ss;
+    ss << "Sending packet of size: " << sent << std::endl;
+    std::string message = ss.str();
+    Logger::info(message);
+    return sent;
+}
+
 void TcpSocket::start_listening() {
     char buffer[1024];
     while (this->listening) {
-        std::stringstream ss;
-        memset(buffer, 0, sizeof(buffer));
+        struct pollfd fds[1];
+        fds[0].fd = this->socket_fd;
+        fds[0].events = POLLIN;
+        fds[0].revents = 0;
 
-        const int bytes = recv(this->socket_fd, buffer, sizeof(buffer), 0);
-        if (bytes == 0) {
-            this->listening = false;
-            ss << "Connection closed by server " << bytes << std::endl;
-            std::string message = ss.str();
-            Logger::info(message);
-            continue;
-        } else if (bytes < 0) {
-            this->listening = false;
-            ss << "Connection closed due to socket error " << bytes << std::endl;
+        int ret = poll(&fds[0], 1, 1000);
+        if (ret == -1) {
+            std::stringstream ss;
+            ss << "Poll failed" << std::endl;
             std::string message = ss.str();
             Logger::error(message);
+            this->listening = false;
+            break;
+        } else if (ret == 0) {
             continue;
         }
 
-        const std::vector<uint8_t> packet(buffer, buffer + bytes);
-        handle_packet(packet);
+        if (fds[0].revents & POLLIN) {
+
+            std::stringstream ss;
+            memset(buffer, 0, sizeof(buffer));
+            std::lock_guard lock(this->fd_mutex);
+            const int bytes = recv(this->socket_fd, buffer, sizeof(buffer), 0);
+            if (bytes == 0) {
+                this->listening = false;
+                ss << "Connection closed by server " << bytes << std::endl;
+                std::string message = ss.str();
+                Logger::info(message);
+                continue;
+            } else if (bytes < 0) {
+                this->listening = false;
+                ss << "Connection closed due to socket error " << bytes << std::endl;
+                std::string message = ss.str();
+                Logger::error(message);
+                continue;
+            }
+
+            const std::vector<uint8_t> packet(buffer, buffer + bytes);
+            this->fd_mutex.unlock();
+            Protocol::handle_packet(packet);
+        }
     }
 }

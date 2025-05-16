@@ -7,22 +7,30 @@
 #include <bits/ostream.tcc>
 
 #include "utils/bytes.hpp"
+#include "utils/checksum.h"
 
 void Protocol::handle_packet(std::vector<uint8_t> bytes) {
-    const std::vector<uint8_t> header_bytes(bytes.begin(), bytes.begin() + 5);
-    const Header header = Header::parse_header(header_bytes);
-
-
-    {
+    auto packet = Packet::parse_packet(bytes);
+    if (!packet.has_value()) {
         std::shared_lock lock(socket_mutex);
-        std::cout << "Pretend I handled the packet." << std::endl;
+
+        Packet packet = Packet::create_packet(MessageType::ERROR,)
     }
+
+
+    std::cout << "Pretend I handled the packet." << std::endl;
 }
 
-std::optional<MessageType> Header::try_from(const uint8_t &value)
-{
-    switch (value)
-    {
+void Protocol::handle_invalid() {
+    std::shared_lock lock(socket_mutex);
+
+    socket_ptr->send_packet();
+}
+
+void Protocol::handle_game_state(std::vector<uint8_t> &payload) {}
+
+std::optional<MessageType> Header::try_from(const uint8_t &value) {
+    switch (value) {
         case 0x00:
             return MessageType::DISCONNECT;
         case 0x01:
@@ -63,8 +71,7 @@ std::optional<Header> Header::parse_header(const std::vector<uint8_t> &bytes) {
 
     std::optional<MessageType> header_type = Header::try_from(bytes[0]);
 
-    if (!header_type.has_value())
-    {
+    if (!header_type.has_value()) {
         std::cout << "Invalid header" << std::endl;
         throw std::errc::protocol_error;
     }
@@ -73,8 +80,29 @@ std::optional<Header> Header::parse_header(const std::vector<uint8_t> &bytes) {
     const uint16_t message_length = u8::to_u16(bytes[1], bytes[2]);
 
     return Header{
-        header_type.value(),
-        message_length,
-        checksum,
+            header_type.value(),
+            message_length,
+            checksum,
     };
+}
+
+Header Header::create_header(const MessageType type, const std::vector<uint8_t> &payload) {
+    const uint16_t checksum = static_cast<uint16_t>(xor_checksum(payload));
+    const uint16_t payload_length = static_cast<uint16_t>(payload.size());
+    return Header{
+            type,
+            payload_length,
+            checksum,
+    };
+}
+
+std::optional<Packet> Packet::parse_packet(const std::vector<uint8_t> &bytes) {
+    const auto header = Header::parse_header(std::vector<uint8_t>(bytes.begin(), bytes.begin() + 5));
+    if (!header.has_value())
+        return std::nullopt;
+    return Packet{header.value(), std::vector<uint8_t>(bytes.begin() + 6, bytes.end())};
+}
+
+Packet Packet::create_packet(const MessageType &type, const std::vector<uint8_t> &payload) {
+    return Packet{Header::create_header(type, payload), payload};
 }
