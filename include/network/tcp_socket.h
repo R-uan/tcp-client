@@ -10,6 +10,9 @@
 class TcpSocket {
 public:
 
+    std::mutex game_state_mutex;
+    std::queue<Packet> game_state_queue;
+
     int port;
     std::string address;
     std::atomic_bool listening;

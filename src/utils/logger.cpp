@@ -15,7 +15,7 @@ void Logger::info(std::string &message)
     ss << "[INFO] " << "[" << buffer << "] " << message;
     std::string output = ss.str();
 
-    std::cout << output << std::endl;
+    std::cout << output;
 }
 
 void Logger::debug(std::string &message)
@@ -29,7 +29,7 @@ void Logger::debug(std::string &message)
     ss << "[DEBUG] " << "[" << buffer << "] " << message;
     std::string output = ss.str();
 
-    std::cout << output << std::endl;
+    std::cout << output;
 }
 
 void Logger::warn(std::string &message)
@@ -43,7 +43,7 @@ void Logger::warn(std::string &message)
     ss << "[WARN] " << "[" << buffer << "] " << message;
     std::string output = ss.str();
 
-    std::cout << output << std::endl;
+    std::cout << output;
 }
 
 void Logger::error(std::string &message)
@@ -57,5 +57,5 @@ void Logger::error(std::string &message)
     ss << "[ERROR] " << "[" << buffer << "] " << message;
     std::string output = ss.str();
 
-    std::cout << output << std::endl;
+    std::cout << output;
 }

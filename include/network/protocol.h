@@ -9,6 +9,8 @@
 #include <queue>
 #include <vector>
 
+
+struct Packet;
 enum class MessageType : uint8_t
 {
     DISCONNECT = 0x00,
@@ -28,19 +30,19 @@ enum class MessageType : uint8_t
 
 struct Protocol {
     static void handle_invalid();
-    static void handle_packet(std::vector<uint8_t> bytes);
-    static void handle_game_state(std::vector<uint8_t> &payload);
+    static void handle_packet(const std::vector<uint8_t> &bytes);
+    static void handle_game_state(Packet &packet);
 };
 
 struct Header {
-    uint8_t message_type;
+    MessageType message_type;
     uint16_t length;
     uint16_t checksum;
 
     std::vector<uint8_t> serialize_header() const;
     static std::optional<MessageType> try_from(const uint8_t &value);
     static std::optional<Header> parse_header(const std::vector<uint8_t> &bytes);
-    static Header Header::create_header(const MessageType type, const std::vector<uint8_t> &payload);
+    static Header create_header(const MessageType type, const std::vector<uint8_t> &payload);
 };
 
 struct Packet {

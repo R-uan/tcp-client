@@ -73,7 +73,7 @@ int TcpSocket::listen() {
 
 int TcpSocket::send_packet(const Packet &packet) const {
     std::lock_guard lock(this->fd_mutex);
-    const ssize_t sent = send(this->socket_fd, &packet.payload(), packet.payload.size(), 0);
+    const ssize_t sent = send(this->socket_fd, packet.payload.data(), packet.payload.size(), 0);
     std::stringstream ss;
     ss << "Sending packet of size: " << sent << std::endl;
     std::string message = ss.str();

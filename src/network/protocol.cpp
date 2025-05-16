@@ -1,33 +1,48 @@
-#include "network/protocol.h"
-
 #include <iostream>
-
-#include "synapse_net.h"
-
+#include <sstream>
 #include <bits/ostream.tcc>
 
+#include "synapse_net.h"
 #include "utils/bytes.hpp"
 #include "utils/checksum.h"
+#include "utils/logger.hpp"
+#include "network/protocol.h"
 
-void Protocol::handle_packet(std::vector<uint8_t> bytes) {
+void Protocol::handle_packet(const std::vector<uint8_t> &bytes) {
+    std::stringstream ss;
     auto packet = Packet::parse_packet(bytes);
-    if (!packet.has_value()) {
-        std::shared_lock lock(socket_mutex);
+    if (!packet.has_value() || !check_the_sum(packet.value())) handle_invalid();
 
-        Packet packet = Packet::create_packet(MessageType::ERROR,)
+
+
+
+    switch (packet.value().header.message_type) {
+        case MessageType::GAMESTATE:
+            ss << "Received GAME STATE packet of " << packet->payload.size() << " bytes" << std::endl;
+            handle_game_state(packet.value());
+            break;
+        default:
+            ss << "Received INVALID packet of " << packet->payload.size() << " bytes" << std::endl;
+            handle_invalid();
+            break;
     }
 
-
-    std::cout << "Pretend I handled the packet." << std::endl;
+    std::string message = ss.str();
+    Logger::info(message);
 }
 
 void Protocol::handle_invalid() {
     std::shared_lock lock(socket_mutex);
-
-    socket_ptr->send_packet();
+    std::string message = "Invalid packet";
+    const auto payload = std::vector<uint8_t>(message.begin(), message.end());
+    const Packet packet = Packet::create_packet(MessageType::ERROR, payload);
+    int _ = socket_ptr->send_packet(packet);
 }
 
-void Protocol::handle_game_state(std::vector<uint8_t> &payload) {}
+void Protocol::handle_game_state(Packet &packet) {
+    std::lock_guard lock(socket_ptr->game_state_mutex);
+    socket_ptr->game_state_queue.push(packet);
+}
 
 std::optional<MessageType> Header::try_from(const uint8_t &value) {
     switch (value) {
@@ -98,8 +113,7 @@ Header Header::create_header(const MessageType type, const std::vector<uint8_t> 
 
 std::optional<Packet> Packet::parse_packet(const std::vector<uint8_t> &bytes) {
     const auto header = Header::parse_header(std::vector<uint8_t>(bytes.begin(), bytes.begin() + 5));
-    if (!header.has_value())
-        return std::nullopt;
+    if (!header.has_value()) return std::nullopt;
     return Packet{header.value(), std::vector<uint8_t>(bytes.begin() + 6, bytes.end())};
 }
 
