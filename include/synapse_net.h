@@ -11,13 +11,9 @@
 #define API_EXPORT __attribute__((visibility("default")))
 #endif
 
-    static std::shared_mutex socket_mutex;
-    static std::unique_ptr<TcpSocket> socket_ptr;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
     API_EXPORT void free_ptr(const uint8_t *ptr);
     API_EXPORT int start_connection(const char *addr, const int port, const char *match_id);

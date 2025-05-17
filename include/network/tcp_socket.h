@@ -1,11 +1,19 @@
 #ifndef TCP_SOCKET_H
 #define TCP_SOCKET_H
+
 #include <atomic>
 #include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <thread>
 
 #include "protocol.h"
+
+
+class TcpSocket;
+
+static std::shared_mutex socket_mutex;
+static std::unique_ptr<TcpSocket> tcp_socket_ptr;
 
 class TcpSocket {
 public:

@@ -1,7 +1,3 @@
-//
-// Created by rw1c on 13/05/25.
-//
-
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 #include <cstdint>
@@ -31,7 +27,7 @@ enum class MessageType : uint8_t
 struct Protocol {
     static void handle_invalid();
     static void handle_packet(const std::vector<uint8_t> &bytes);
-    static void handle_game_state(Packet &packet);
+    static void handle_game_state(const Packet &packet);
 };
 
 struct Header {

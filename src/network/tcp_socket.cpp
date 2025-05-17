@@ -3,13 +3,14 @@
 #include <arpa/inet.h>
 #include <bits/socket.h>
 #include <cstring>
+#include <future>
 #include <netinet/in.h>
+#include <poll.h>
 #include <sstream>
 #include <sys/socket.h>
 #include <system_error>
 #include <unistd.h>
 #include <vector>
-#include <poll.h>
 
 #include "network/protocol.h"
 #include "utils/logger.hpp"
@@ -122,8 +123,7 @@ void TcpSocket::start_listening() {
             }
 
             const std::vector<uint8_t> packet(buffer, buffer + bytes);
-            this->fd_mutex.unlock();
-            Protocol::handle_packet(packet);
+            auto _ = std::async(std::launch::async, Protocol::handle_packet, packet);
         }
     }
 }

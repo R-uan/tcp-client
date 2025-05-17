@@ -10,38 +10,38 @@
 
 void Protocol::handle_packet(const std::vector<uint8_t> &bytes) {
     std::stringstream ss;
-    auto packet = Packet::parse_packet(bytes);
+    const auto packet = Packet::parse_packet(bytes);
     if (!packet.has_value() || !check_the_sum(packet.value())) handle_invalid();
-
-
-
 
     switch (packet.value().header.message_type) {
         case MessageType::GAMESTATE:
-            ss << "Received GAME STATE packet of " << packet->payload.size() << " bytes" << std::endl;
             handle_game_state(packet.value());
             break;
         default:
             ss << "Received INVALID packet of " << packet->payload.size() << " bytes" << std::endl;
+            std::string message2 = ss.str();
+            Logger::info(message2);
             handle_invalid();
             break;
     }
 
-    std::string message = ss.str();
-    Logger::info(message);
 }
 
 void Protocol::handle_invalid() {
-    std::shared_lock lock(socket_mutex);
     std::string message = "Invalid packet";
     const auto payload = std::vector<uint8_t>(message.begin(), message.end());
     const Packet packet = Packet::create_packet(MessageType::ERROR, payload);
-    int _ = socket_ptr->send_packet(packet);
+    int _ = tcp_socket_ptr->send_packet(packet);
 }
 
-void Protocol::handle_game_state(Packet &packet) {
-    std::lock_guard lock(socket_ptr->game_state_mutex);
-    socket_ptr->game_state_queue.push(packet);
+void Protocol::handle_game_state(const Packet &packet) {
+    std::stringstream ss;
+    ss << "Received GAME STATE packet of " << packet.payload.size() << " bytes" << std::endl;
+    std::string message = ss.str();
+    Logger::info(message);
+
+    std::unique_lock<std::mutex> lock(tcp_socket_ptr->game_state_mutex);
+    tcp_socket_ptr->game_state_queue.push(packet);
 }
 
 std::optional<MessageType> Header::try_from(const uint8_t &value) {

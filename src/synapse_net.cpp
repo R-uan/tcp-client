@@ -8,14 +8,13 @@
 #include "network/tcp_socket.h"
 #include "utils/logger.hpp"
 
-
 API_EXPORT void free_ptr(const uint8_t *ptr) {}
 
 API_EXPORT int start_connection(const char *addr, const int port, const char *match_id) {
     try {
-        socket_ptr = std::make_unique<TcpSocket>(std::string(addr), port);
-        socket_ptr->connect();
-        const int listening = socket_ptr->listen();
+        tcp_socket_ptr = std::make_unique<TcpSocket>(std::string(addr), port);
+        tcp_socket_ptr->connect();
+        const int listening = tcp_socket_ptr->listen();
         return listening;
     } catch (...) {
         std::stringstream ss;
