@@ -13,11 +13,12 @@
 #include <vector>
 
 #include "network/protocol.h"
+#include "utils/checksum.h"
 #include "utils/logger.hpp"
 
-TcpSocket::TcpSocket(const std::string &addr, const int port) : port(port), address(addr), listening(false) {}
+TcpConnection::TcpConnection(const std::string &addr, const int port) : port(port), address(addr), listening(false) {}
 
-TcpSocket::~TcpSocket() {
+TcpConnection::~TcpConnection() {
     close(this->socket_fd);
     if (this->listening_thread.joinable()) {
         this->listening_thread.join();
@@ -29,7 +30,7 @@ TcpSocket::~TcpSocket() {
     Logger::info(message);
 }
 
-int TcpSocket::connect() {
+int TcpConnection::connect() {
     std::stringstream ss;
     const int fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -61,9 +62,9 @@ int TcpSocket::connect() {
     return 0;
 }
 
-int TcpSocket::listen() {
+int TcpConnection::listen() {
     this->listening = true;
-    this->listening_thread = std::thread(&TcpSocket::start_listening, this);
+    this->listening_thread = std::thread(&TcpConnection::start_listening, this);
 
     std::stringstream ss;
     ss << "Listening on port " << this->port << std::endl;
@@ -72,7 +73,7 @@ int TcpSocket::listen() {
     return 1;
 }
 
-int TcpSocket::send_packet(const Packet &packet) const {
+int TcpConnection::send_packet(const Packet &packet) const {
     std::lock_guard lock(this->fd_mutex);
     const ssize_t sent = send(this->socket_fd, packet.payload.data(), packet.payload.size(), 0);
     std::stringstream ss;
@@ -82,7 +83,7 @@ int TcpSocket::send_packet(const Packet &packet) const {
     return sent;
 }
 
-void TcpSocket::start_listening() {
+void TcpConnection::start_listening() {
     char buffer[1024];
     while (this->listening) {
         struct pollfd fds[1];
@@ -123,7 +124,69 @@ void TcpSocket::start_listening() {
             }
 
             const std::vector<uint8_t> packet(buffer, buffer + bytes);
-            auto _ = std::async(std::launch::async, Protocol::handle_packet, packet);
+            auto future = std::async(std::launch::async, [this, packet]() {
+                this->handle_packet(packet);
+            });
         }
+    }
+}
+
+void TcpConnection::handle_invalid() const {
+    std::string message = "Invalid packet";
+    const auto payload = std::vector<uint8_t>(message.begin(), message.end());
+    const Packet packet = Packet::create_packet(MessageType::ERROR, payload);
+    int _ = this->send_packet(packet);
+}
+
+void TcpConnection::handle_game_state(const Packet &packet) {
+
+    std::unique_lock<std::mutex> lock(this->game_state_mutex);
+    this->game_state_queue.push(packet);
+
+    std::stringstream ss;
+    ss << "Received GAME STATE packet of " << packet.payload.size() << " bytes" << std::endl;
+    std::string message = ss.str();
+    Logger::info(message);
+}
+
+void TcpConnection::handle_packet(const std::vector<uint8_t> &bytes) {
+    std::stringstream ss;
+    const auto packet = Packet::parse_packet(bytes);
+    if (!packet.has_value() || !check_the_sum(packet.value())) {
+        handle_invalid();
+        return;
+    }
+
+    switch (packet.value().header.message_type) {
+        case MessageType::GAMESTATE:
+            handle_game_state(packet.value());
+            break;
+        default:
+            ss << "Received INVALID packet of " << packet->payload.size() << " bytes" << std::endl;
+            std::string message2 = ss.str();
+            Logger::info(message2);
+            handle_invalid();
+            break;
+    }
+}
+
+TcpConnection* TcpConnection::socket_instance = nullptr;
+std::mutex TcpConnection::socket_mutex;
+
+TcpConnection * TcpConnection::GetInstance() {
+    std::lock_guard lock(socket_mutex);
+    return socket_instance;
+}
+
+void TcpConnection::SetInstance(TcpConnection *instance) {
+    std::lock_guard lock(socket_mutex);
+    if (instance != socket_instance) {
+        delete socket_instance;
+        socket_instance = instance;
+
+        std::stringstream ss;
+        ss << "Set TCP Connection" << std::endl;
+        std::string message = ss.str();
+        Logger::debug(message);
     }
 }

@@ -1,4 +1,5 @@
 #ifndef TCP_SOCKET_H
+
 #define TCP_SOCKET_H
 
 #include <atomic>
@@ -9,14 +10,10 @@
 
 #include "protocol.h"
 
-
-class TcpSocket;
-
-static std::shared_mutex socket_mutex;
-static std::unique_ptr<TcpSocket> tcp_socket_ptr;
-
-class TcpSocket {
+class TcpConnection {
 public:
+    static TcpConnection *GetInstance();
+    static void SetInstance(TcpConnection *instance);
 
     std::mutex game_state_mutex;
     std::queue<Packet> game_state_queue;
@@ -25,17 +22,25 @@ public:
     std::string address;
     std::atomic_bool listening;
 
-    ~TcpSocket();
+    ~TcpConnection();
+    TcpConnection(const std::string &addr, int port);
 
     int listen();
     int connect();
     int send_packet(const Packet &packet) const;
-    TcpSocket(const std::string &addr, int port);
+
+    void handle_invalid() const;
+    void handle_game_state(const Packet &packet);
+    void handle_packet(const std::vector<uint8_t> &bytes);
 
 private:
     int socket_fd;
-    void start_listening();
     mutable std::mutex fd_mutex;
     std::thread listening_thread;
+    static std::mutex socket_mutex;
+    static TcpConnection *socket_instance;
+
+    void start_listening();
 };
+
 #endif //TCP_SOCKET_H

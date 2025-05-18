@@ -24,12 +24,6 @@ enum class MessageType : uint8_t
     ERROR = 0xFF,
 };
 
-struct Protocol {
-    static void handle_invalid();
-    static void handle_packet(const std::vector<uint8_t> &bytes);
-    static void handle_game_state(const Packet &packet);
-};
-
 struct Header {
     MessageType message_type;
     uint16_t length;

@@ -8,42 +8,6 @@
 #include "utils/logger.hpp"
 #include "network/protocol.h"
 
-void Protocol::handle_packet(const std::vector<uint8_t> &bytes) {
-    std::stringstream ss;
-    const auto packet = Packet::parse_packet(bytes);
-    if (!packet.has_value() || !check_the_sum(packet.value())) handle_invalid();
-
-    switch (packet.value().header.message_type) {
-        case MessageType::GAMESTATE:
-            handle_game_state(packet.value());
-            break;
-        default:
-            ss << "Received INVALID packet of " << packet->payload.size() << " bytes" << std::endl;
-            std::string message2 = ss.str();
-            Logger::info(message2);
-            handle_invalid();
-            break;
-    }
-
-}
-
-void Protocol::handle_invalid() {
-    std::string message = "Invalid packet";
-    const auto payload = std::vector<uint8_t>(message.begin(), message.end());
-    const Packet packet = Packet::create_packet(MessageType::ERROR, payload);
-    int _ = tcp_socket_ptr->send_packet(packet);
-}
-
-void Protocol::handle_game_state(const Packet &packet) {
-    std::stringstream ss;
-    ss << "Received GAME STATE packet of " << packet.payload.size() << " bytes" << std::endl;
-    std::string message = ss.str();
-    Logger::info(message);
-
-    std::unique_lock<std::mutex> lock(tcp_socket_ptr->game_state_mutex);
-    tcp_socket_ptr->game_state_queue.push(packet);
-}
-
 std::optional<MessageType> Header::try_from(const uint8_t &value) {
     switch (value) {
         case 0x00:
@@ -102,8 +66,8 @@ std::optional<Header> Header::parse_header(const std::vector<uint8_t> &bytes) {
 }
 
 Header Header::create_header(const MessageType type, const std::vector<uint8_t> &payload) {
-    const uint16_t checksum = static_cast<uint16_t>(xor_checksum(payload));
-    const uint16_t payload_length = static_cast<uint16_t>(payload.size());
+    const auto checksum = static_cast<uint16_t>(xor_checksum(payload));
+    const auto payload_length = static_cast<uint16_t>(payload.size());
     return Header{
             type,
             payload_length,

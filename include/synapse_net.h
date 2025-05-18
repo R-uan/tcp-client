@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <shared_mutex>
 #include <sys/types.h>
 
@@ -19,7 +20,7 @@ extern "C" {
     API_EXPORT int start_connection(const char *addr, const int port, const char *match_id);
         // Retrieve packet data.
     API_EXPORT uint8_t *retrieve_error(int *outSize);
-    API_EXPORT uint8_t *retrieve_gamestate(int *outSize);
+    API_EXPORT uint8_t *retrieve_game_state(int *outSize);
         // Communication through socket.
     API_EXPORT int play_card(const uint8_t *payload, int length);
     API_EXPORT int connect_player(const char *playerId, const char *playerDeckId, const char *token);
