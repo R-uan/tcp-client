@@ -6,11 +6,16 @@
 
 #include <ostream>
 #include <sstream>
-
+#include <nlohmann/json.hpp>
+#include "core/conn_request.h"
 #include "network/tcp_socket.h"
 #include "utils/logger.hpp"
 
-API_EXPORT void free_ptr(const uint8_t *ptr) {}
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConnRequest, player_id, auth_token, current_deck_id)
+
+API_EXPORT void free_ptr(const uint8_t *ptr) {
+    delete[] ptr;
+}
 
 API_EXPORT int start_connection(const char *addr, const int port, const char *match_id) {
     try {
@@ -27,7 +32,6 @@ API_EXPORT int start_connection(const char *addr, const int port, const char *ma
         return -1;
     }
 }
-
 
 API_EXPORT uint8_t *retrieve_error(int *outSize) {
     return nullptr;
@@ -65,5 +69,9 @@ API_EXPORT int play_card(const uint8_t *payload, int length) {
 }
 
 API_EXPORT int connect_player(const char *playerId, const char *playerDeckId, const char *token) {
-    return 0;
+    auto conn = ConnRequest(playerId, playerDeckId, token);
+    const auto cbor_conn = nlohmann::json::to_cbor(nlohmann::json(conn));
+    const auto packet = Packet::create_packet(MessageType::CONNECT, cbor_conn);
+    const int sent = TcpConnection::GetInstance()->send_packet(packet);
+    return sent;
 }

@@ -29,16 +29,17 @@ struct Header {
     uint16_t length;
     uint16_t checksum;
 
-    std::vector<uint8_t> serialize_header() const;
+    [[nodiscard]] std::vector<uint8_t> serialize_header() const;
     static std::optional<MessageType> try_from(const uint8_t &value);
     static std::optional<Header> parse_header(const std::vector<uint8_t> &bytes);
-    static Header create_header(const MessageType type, const std::vector<uint8_t> &payload);
+    static Header create_header(MessageType type, const std::vector<uint8_t> &payload);
 };
 
 struct Packet {
     Header header;
     std::vector<uint8_t> payload;
 
+    [[nodiscard]] std::vector<uint8_t> serialize_packet() const;
     static std::optional<Packet> parse_packet(const std::vector<uint8_t> &bytes);
     static Packet create_packet(const MessageType &type, const std::vector<uint8_t> &payload);
 };

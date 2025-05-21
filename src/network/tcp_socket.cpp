@@ -75,12 +75,16 @@ int TcpConnection::listen() {
 
 int TcpConnection::send_packet(const Packet &packet) const {
     std::lock_guard lock(this->fd_mutex);
-    const ssize_t sent = send(this->socket_fd, packet.payload.data(), packet.payload.size(), 0);
+    const auto packet_bytes = packet.serialize_packet();
+    const ssize_t sent = send(this->socket_fd, packet_bytes.data(), packet_bytes.size(), 0);
+
+
     std::stringstream ss;
     ss << "Sending packet of size: " << sent << std::endl;
     std::string message = ss.str();
     Logger::info(message);
-    return sent;
+
+    return static_cast<int>(sent);
 }
 
 void TcpConnection::start_listening() {

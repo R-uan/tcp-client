@@ -40,7 +40,6 @@ std::vector<uint8_t> Header::serialize_header() const {
     header_data.push_back(static_cast<uint8_t>((this->checksum >> 8) & 0xFF));
     header_data.push_back(static_cast<uint8_t>(this->checksum & 0xFF));
     header_data.push_back(0x0A);
-
     return header_data;
 }
 
@@ -66,7 +65,7 @@ std::optional<Header> Header::parse_header(const std::vector<uint8_t> &bytes) {
 }
 
 Header Header::create_header(const MessageType type, const std::vector<uint8_t> &payload) {
-    const auto checksum = static_cast<uint16_t>(xor_checksum(payload));
+    const auto checksum = xor_checksum(payload);
     const auto payload_length = static_cast<uint16_t>(payload.size());
     return Header{
             type,
@@ -83,4 +82,14 @@ std::optional<Packet> Packet::parse_packet(const std::vector<uint8_t> &bytes) {
 
 Packet Packet::create_packet(const MessageType &type, const std::vector<uint8_t> &payload) {
     return Packet{Header::create_header(type, payload), payload};
+}
+
+std::vector<uint8_t> Packet::serialize_packet() const {
+    auto packet = std::vector<uint8_t>();
+    auto header_bytes = this->header.serialize_header();
+
+    packet.reserve(header_bytes.size() + this->payload.size());
+    packet.insert(packet.end(), header_bytes.begin(), header_bytes.end());
+    packet.insert(packet.end(), this->payload.begin(), this->payload.end());
+    return packet;
 }
