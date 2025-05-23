@@ -162,7 +162,7 @@ void TcpConnection::handle_packet(const std::vector<uint8_t> &bytes) {
     }
 
     switch (packet.value().header.message_type) {
-        case MessageType::GAMESTATE:
+        case MessageType::GAME_STATE:
             handle_game_state(packet.value());
             break;
         default:

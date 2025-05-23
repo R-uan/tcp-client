@@ -7,11 +7,13 @@
 #include <ostream>
 #include <sstream>
 #include <nlohmann/json.hpp>
-#include "core/conn_request.h"
+#include "models/player_connection.h"
 #include "network/tcp_socket.h"
 #include "utils/logger.hpp"
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConnRequest, player_id, auth_token, current_deck_id)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayerConnectionRequest, player_id, auth_token, current_deck_id)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayerReconnectionRequest, player_id, auth_token)
+
 
 API_EXPORT void free_ptr(const uint8_t *ptr) {
     delete[] ptr;
@@ -69,9 +71,17 @@ API_EXPORT int play_card(const uint8_t *payload, int length) {
 }
 
 API_EXPORT int connect_player(const char *playerId, const char *playerDeckId, const char *token) {
-    auto conn = ConnRequest(playerId, playerDeckId, token);
-    const auto cbor_conn = nlohmann::json::to_cbor(nlohmann::json(conn));
-    const auto packet = Packet::create_packet(MessageType::CONNECT, cbor_conn);
+    auto conn = PlayerConnectionRequest(playerId, playerDeckId, token);
+    const auto cbor_bytes = nlohmann::json::to_cbor(nlohmann::json(conn));
+    const auto packet = Packet::create_packet(MessageType::CONNECT, cbor_bytes);
+    const int sent = TcpConnection::GetInstance()->send_packet(packet);
+    return sent;
+}
+
+API_EXPORT int reconnect_player(const char *playerId, const char *token) {
+    auto reconnection = PlayerReconnectionRequest(playerId, token);
+    const auto cbor_bytes = nlohmann::json(nlohmann::json(reconnection));
+    const auto packet = Packet::create_packet(MessageType::RECONNECT, cbor_bytes);
     const int sent = TcpConnection::GetInstance()->send_packet(packet);
     return sent;
 }

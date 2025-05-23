@@ -24,6 +24,7 @@ extern "C" {
 
     API_EXPORT int play_card(const uint8_t *payload, int length);
     API_EXPORT int connect_player(const char *playerId, const char *playerDeckId, const char *token);
+    API_EXPORT int reconnect_player(const char *playerId, const char *token);
 
 #ifdef __cplusplus
 }

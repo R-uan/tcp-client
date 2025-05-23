@@ -11,8 +11,10 @@ enum class MessageType : uint8_t
 {
     DISCONNECT = 0x00,
     CONNECT = 0x01,
+    PING = 0x02,
+    RECONNECT = 0x03,
 
-    GAMESTATE = 0x10,
+    GAME_STATE = 0x10,
 
     PLAY_CARD = 0x11,
     ATTACK_PLAYER = 0x12,

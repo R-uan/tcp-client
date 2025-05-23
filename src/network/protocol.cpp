@@ -14,8 +14,12 @@ std::optional<MessageType> Header::try_from(const uint8_t &value) {
             return MessageType::DISCONNECT;
         case 0x01:
             return MessageType::CONNECT;
+        case 0x02:
+            return MessageType::PING;
+        case 0x03:
+            return MessageType::RECONNECT;
         case 0x10:
-            return MessageType::GAMESTATE;
+            return MessageType::GAME_STATE;
         case 0xFB:
             return MessageType::ALREADY_CONNECTED;
         case 0xFC:
