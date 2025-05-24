@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+#ifndef  PLAYER_CONNECTION_H
+#define PLAYER_CONNECTION_H
 struct PlayerConnectionRequest
 {
     std::string player_id;
@@ -16,3 +18,5 @@ struct PlayerReconnectionRequest {
 
     PlayerReconnectionRequest(const std::string &player_id, const std::string &auth_token);
 };
+
+#endif

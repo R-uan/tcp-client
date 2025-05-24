@@ -23,8 +23,8 @@ extern "C" {
     API_EXPORT uint8_t *retrieve_game_state(int *outSize);
 
     API_EXPORT int play_card(const uint8_t *payload, int length);
-    API_EXPORT int connect_player(const char *playerId, const char *playerDeckId, const char *token);
-    API_EXPORT int reconnect_player(const char *playerId, const char *token);
+    API_EXPORT int connect_player(const char *player_id, const char *player_deck_id, const char *auth_token);
+    API_EXPORT int reconnect_player(const char *player_id, const char *auth_token);
 
 #ifdef __cplusplus
 }
