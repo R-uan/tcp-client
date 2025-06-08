@@ -7,13 +7,12 @@
 #include <ostream>
 #include <sstream>
 #include <nlohmann/json.hpp>
-#include "models/player_connection.h"
+#include "models/requests.h"
 #include "network/tcp_socket.h"
 #include "utils/logger.hpp"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayerConnectionRequest, player_id, auth_token, current_deck_id)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayerReconnectionRequest, player_id, auth_token)
-
 
 API_EXPORT void free_ptr(const uint8_t *ptr) {
     delete[] ptr;
@@ -66,8 +65,15 @@ API_EXPORT uint8_t *retrieve_game_state(int *outSize) {
     return result;
 }
 
-API_EXPORT int play_card(const uint8_t *payload, int length) {
-    return 0;
+API_EXPORT int play_card(const char *card_id, const char *actor_id, const char *target_id, const char *target_position) {
+    const std::optional<std::string> optional_target = target_id ? std::make_optional(target_id) : std::nullopt;
+    const std::optional<std::string> optional_target_position = target_position ? std::make_optional(target_position) : std::nullopt;
+    const PlayCardRequest request(card_id, actor_id, optional_target, optional_target_position);
+    const nlohmann::json json = PlayCardRequest::to_json(request);
+    const auto cbor_bytes = nlohmann::json::to_cbor(json);
+    const auto packet = Packet::create_packet(MessageType::PLAY_CARD, cbor_bytes);
+    const int sent = TcpConnection::GetInstance()->send_packet(packet);
+    return sent;
 }
 
 API_EXPORT int connect_player(const char *player_id, const char *player_deck_id, const char *auth_token) {
